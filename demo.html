@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数字化管控演示驾驶舱 · A线</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b1114;--bg2:#0e1619;--panel:#121c20;--panel2:#172328;--panel3:#1c2a30;
+  --line:#213038;--line2:#2c3e46;--txt:#e8eff2;--dim:#8ba4ad;--dim2:#5d737c;
+  --teal:#2dd4bf;--cyan:#38bdf8;--amber:#f5b23e;--red:#f4706c;--green:#5ddb8f;
+  --mono:'JetBrains Mono','Consolas',monospace;--sans:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+}
+body{background:
+  radial-gradient(900px 460px at 10% -8%,rgba(45,212,191,.08),transparent 62%),
+  radial-gradient(800px 400px at 96% 2%,rgba(56,189,248,.06),transparent 62%),var(--bg);
+  color:var(--txt);font-family:var(--sans);font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+.shell{max-width:1500px;margin:0 auto;padding:16px 20px 28px}
+
+/* 顶栏 */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px}
+.mk{width:38px;height:38px;border-radius:10px;border:1px solid #2b5654;display:grid;place-items:center;
+  background:linear-gradient(145deg,#1c3538,#101f22);box-shadow:inset 0 0 20px rgba(45,212,191,.16)}
+.mk svg{width:21px;height:21px;stroke:var(--teal)}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.4px}
+.brand h1 span{color:var(--teal)}
+.brand p{font-size:10.5px;color:var(--dim2);letter-spacing:2px}
+.tr{margin-left:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;padding:5px 11px;border-radius:20px;
+  border:1px solid var(--line2);color:var(--dim);background:rgba(23,35,40,.7)}
+.pill.on{border-color:rgba(45,212,191,.4);color:var(--teal);background:rgba(45,212,191,.08)}
+.pill.sim{border-color:rgba(245,178,62,.4);color:var(--amber);background:rgba(245,178,62,.07)}
+.pill.bad{border-color:rgba(244,112,108,.45);color:var(--red);background:rgba(244,112,108,.08)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.dot.blink{animation:pl 1.6s ease-in-out infinite}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:var(--mono);font-size:16px;color:var(--txt)}
+
+/* 导航 */
+.nav{display:flex;gap:6px;padding:10px 0;flex-wrap:wrap}
+.nav button{font-family:var(--sans);font-size:12.5px;padding:8px 14px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--dim);transition:.18s;position:relative}
+.nav button:hover{color:var(--txt)}
+.nav button.on{border-color:rgba(45,212,191,.5);color:var(--teal);background:rgba(45,212,191,.1)}
+.nav button.locked{opacity:.4;cursor:not-allowed}
+.nav button .num{font-family:var(--mono);font-size:10.5px;color:var(--dim2);margin-right:6px}
+.nav button .lock{font-size:11px;margin-left:6px}
+
+/* 屏幕 */
+.screen{display:none}
+.screen.on{display:block;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+.card+.card{margin-top:13px}
+.ch{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.ch h2{font-size:13.5px;font-weight:500;letter-spacing:.4px}
+.ch h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--teal);box-shadow:0 0 9px rgba(45,212,191,.5);display:inline-block;margin-right:8px;vertical-align:-1px}
+.ch .m{margin-left:auto;font-size:11px;color:var(--dim2)}
+
+/* 登录 */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.role{border:1px solid var(--line2);border-radius:12px;padding:18px 18px 16px;background:var(--panel2);
+  cursor:pointer;transition:.2s;text-align:left}
+.role:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.3)}
+.role .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line2);
+  background:rgba(45,212,191,.07);font-size:16px;margin-bottom:10px}
+.role h3{font-size:14px;margin-bottom:3px}
+.role p{font-size:11.5px;color:var(--dim2);line-height:1.6}
+.role .tags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10.5px;padding:2px 8px;border-radius:9px;border:1px solid var(--line2);color:var(--dim)}
+.tag.ok{color:var(--teal);border-color:rgba(45,212,191,.3)}
+.login-state{margin-top:13px;font-size:12px;color:var(--dim)}
+
+/* 手动轴控 */
+.ctrl-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.switch{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+.switch button{font-family:var(--sans);font-size:12px;padding:7px 16px;border:none;background:transparent;color:var(--dim);cursor:pointer}
+.switch button.on{background:rgba(45,212,191,.14);color:var(--teal)}
+.axis-tabs{display:flex;gap:8px;margin:12px 0}
+.axis-tabs button{flex:1;font-family:var(--mono);font-size:12px;padding:9px;border-radius:9px;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--dim);cursor:pointer}
+.axis-tabs button.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.jb{font-family:var(--sans);font-size:13px;padding:12px 6px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line2);background:var(--panel3);color:var(--txt);transition:.15s;user-select:none}
+.jb:hover{border-color:var(--teal);color:var(--teal)}
+.jb:active{transform:scale(.98);background:rgba(45,212,191,.14)}
+.jb.stop{border-color:rgba(244,112,108,.4);color:var(--red)}
+.jb.wide{grid-column:span 2}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+.ro{padding:11px 12px;border-radius:9px;background:rgba(23,35,40,.6);border:1px solid var(--line)}
+.ro .l{font-size:11px;color:var(--dim2)}
+.ro .v{font-family:var(--mono);font-size:19px;margin-top:2px}
+.ro .v small{font-size:11px;color:var(--dim)}
+.status-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px;font-size:11.5px}
+.st{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;border:1px solid var(--line2);color:var(--dim)}
+
+/* 立库图 */
+.stage{position:relative;height:300px;border:1px solid var(--line2);border-radius:12px;
+  background:repeating-linear-gradient(45deg,rgba(33,48,56,.25),rgba(33,48,56,.25) 10px,transparent 10px,transparent 20px);
+  overflow:hidden}
+.stage .rack{position:absolute;inset:14px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:6px}
+.stage .rack div{border:1px dashed rgba(44,62,70,.8);border-radius:7px}
+.stacker{position:absolute;width:52px;height:40px;border-radius:8px;border:1px solid var(--teal);
+  background:linear-gradient(160deg,rgba(45,212,191,.28),rgba(45,212,191,.06));
+  box-shadow:0 0 18px rgba(45,212,191,.3);transition:left .55s cubic-bezier(.2,.7,.2,1),bottom .55s cubic-bezier(.2,.7,.2,1);
+  display:grid;place-items:center;font-family:var(--mono);font-size:9.5px;color:#9df3e6;letter-spacing:.5px}
+.axis-lab-x{position:absolute;left:14px;right:14px;bottom:4px;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;color:var(--dim2)}
+.axis-lab-y{position:absolute;top:14px;bottom:14px;left:3px;display:flex;flex-direction:column;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;color:var(--dim2)}
+
+/* 日志 */
+.log{height:150px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.9;
+  background:rgba(9,14,17,.6);border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:12px}
+.log::-webkit-scrollbar{width:5px}.log::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.log div{color:var(--dim)}
+.log div b{color:var(--teal)}
+.log div.err{color:var(--red)}
+.log div.ok{color:var(--green)}
+
+/* 排查 */
+.check{display:flex;flex-direction:column;gap:9px}
+.ck{display:grid;grid-template-columns:26px 1fr auto;gap:11px;align-items:center;
+  padding:11px 13px;border-radius:9px;background:rgba(23,35,40,.55);border:1px solid var(--line)}
+.ck .i{font-family:var(--mono);font-size:11.5px;color:var(--dim2);text-align:center}
+.ck .t{font-size:12.5px}
+.ck .t em{font-style:normal;color:var(--dim2);font-size:11px;margin-left:7px}
+.ck .b{font-family:var(--sans);font-size:11.5px;padding:6px 12px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--txt)}
+.ck .b:hover{border-color:var(--teal);color:var(--teal)}
+.ck .r{font-size:11.5px;color:var(--dim2);min-width:70px;text-align:right}
+.ck.pass{border-color:rgba(93,219,143,.35)}
+.ck.pass .r{color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--dim);padding:8px 9px;border-bottom:1px solid var(--line2);background:rgba(23,35,40,.5)}
+td{padding:8px 9px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+td.mis{color:var(--red);font-weight:600}
+.mon{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.bit{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:9px;border:1px solid var(--line2);
+  background:rgba(23,35,40,.55);font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.bit.lit{border-color:rgba(93,219,143,.5);color:var(--green);box-shadow:0 0 12px rgba(93,219,143,.15)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{padding:14px 15px;border-radius:12px;background:linear-gradient(160deg,var(--panel2),var(--bg2));border:1px solid var(--line);position:relative}
+.kpi::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--teal),transparent)}
+.kpi .l{font-size:11.5px;color:var(--dim)}
+.kpi .v{font-family:var(--mono);font-size:27px;font-weight:700;margin-top:2px}
+.kpi .v small{font-size:12px;color:var(--dim);font-weight:400}
+.kpi .s{font-size:11px;color:var(--dim2);margin-top:2px}
+.mini{display:grid;grid-template-columns:1.2fr .8fr;gap:13px;margin-top:13px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px}
+.bars .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.bars .c .b{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--teal),rgba(45,212,191,.1))}
+.bars .c:last-child .b{background:linear-gradient(180deg,var(--cyan),rgba(56,189,248,.1))}
+.xa{display:flex;gap:6px;margin-top:6px}
+.xa span{flex:1;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--dim2)}
+.devrow{display:grid;grid-template-columns:88px 1fr 38px;gap:9px;align-items:center;margin-bottom:9px}
+.devrow .n{font-size:11.5px}
+.devrow .tr2{height:7px;border-radius:4px;background:rgba(44,62,70,.7);overflow:hidden}
+.devrow .tr2 i{display:block;height:100%;background:linear-gradient(90deg,rgba(45,212,191,.3),var(--teal))}
+.devrow .p{font-family:var(--mono);font-size:11px;text-align:right;color:var(--dim)}
+
+/* 溯源 */
+.search{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
+.search input{flex:1;min-width:220px;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;
+  padding:10px 13px;color:var(--txt);font-family:var(--mono);font-size:12.5px;outline:none}
+.search input:focus{border-color:var(--teal)}
+.btn{font-family:var(--sans);font-size:12.5px;padding:10px 15px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--txt);transition:.16s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.pri{background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.45);color:var(--teal)}
+.btn.warn{background:rgba(245,178,62,.1);border-color:rgba(245,178,62,.4);color:var(--amber)}
+.btn.dang{background:rgba(244,112,108,.1);border-color:rgba(244,112,108,.45);color:var(--red)}
+.tl-wrap{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start}
+.mat{font-family:var(--mono);font-size:12.5px}
+.mat .id{font-size:17px;color:var(--teal);letter-spacing:.4px}
+.mat .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.mat .row span{color:var(--dim);font-size:11.5px}
+.verdict{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:12px}
+.verdict.ok{background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.3);color:var(--teal)}
+.verdict.ng{background:rgba(244,112,108,.08);border:1px solid rgba(244,112,108,.35);color:var(--red)}
+.tl{position:relative;padding:0 0 18px 24px}
+.tl::before{content:'';position:absolute;left:7px;top:6px;bottom:0;width:1px;background:linear-gradient(180deg,rgba(45,212,191,.5),transparent)}
+.tl:last-child{padding-bottom:0}
+.tl .n{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--teal)}
+.tl.ng .n{border-color:var(--red)}
+.tl .h{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.tl .nm{font-size:13px;font-weight:500}
+.tl .tm{font-family:var(--mono);font-size:11px;color:var(--dim2)}
+.tl .d{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.65}
+.tl .d b{color:var(--txt);font-weight:500}
+
+/* 通讯采集 */
+.chartbox{position:relative;height:186px;border:1px solid var(--line);border-radius:11px;background:rgba(9,14,17,.65);overflow:hidden}
+.chartbox .gl{position:absolute;inset:0;background-image:linear-gradient(rgba(44,62,70,.5) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(44,62,70,.3) 1px,transparent 1px);background-size:100% 25%,60px 100%}
+.chartbox svg{position:absolute;inset:0;width:100%;height:100%}
+.legend{display:flex;gap:16px;margin-top:9px;font-size:11px;color:var(--dim);flex-wrap:wrap}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px;vertical-align:2px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:13px}
+.metric{padding:11px 12px;border-radius:9px;background:rgba(23,35,40,.6);border:1px solid var(--line)}
+.metric .l{font-size:11px;color:var(--dim2)}
+.metric .v{font-family:var(--mono);font-size:17px;margin-top:2px}
+.metric .v small{font-size:11px;color:var(--dim)}
+
+/* 弹窗 / 预警 */
+.modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:20px;background:rgba(5,9,11,.75)}
+.modal.on{display:grid}
+.modal .box{width:min(700px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#16232a,#0e1619);
+  border:1px solid var(--line2);border-radius:15px;padding:20px 22px}
+.modal .box h3{font-size:15px;margin-bottom:4px}
+.modal .box .sub{font-size:11.5px;color:var(--dim2);margin-bottom:14px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:70;padding:11px 18px;border-radius:10px;
+  font-size:12.5px;border:1px solid;background:#132024;display:none}
+.toast.on{display:block;animation:fi .2s ease}
+.toast.ok{border-color:rgba(93,219,143,.4);color:var(--green)}
+.toast.bad{border-color:rgba(244,112,108,.45);color:var(--red)}
+.tower{display:flex;gap:8px;margin:12px 0}
+.tower .lamp{width:26px;height:26px;border-radius:50%;border:2px solid var(--line2);background:#0e171a}
+.tower .lamp.r.on{background:radial-gradient(circle,#ff8a85,#c53b37);box-shadow:0 0 18px rgba(244,112,108,.7);border-color:#f4706c}
+.tower .lamp.y.on{background:radial-gradient(circle,#ffd479,#c98a1f);box-shadow:0 0 16px rgba(245,178,62,.6)}
+.tower .lamp.g.on{background:radial-gradient(circle,#8ef0b5,#2fa468);box-shadow:0 0 16px rgba(93,219,143,.6)}
+
+@media(max-width:1100px){
+ .ctrl-wrap,.tl-wrap,.mini{grid-template-columns:1fr}
+ .roles{grid-template-columns:1fr}
+ .kpis{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+ .shell{padding:12px}
+ .stage{height:220px}
+ .readout{grid-template-columns:1fr}
+ .kpis{grid-template-columns:1fr}
+}
+/* 打印：只保留审计报告 */
+@media print{
+ body{background:#fff;color:#000}
+ .shell,.nav,.top,.log,.toast,.tower,.stage{display:none !important}
+ #reportPrint{display:block !important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="top">
+  <div class="brand">
+    <div class="mk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round">
+      <path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></div>
+    <div><h1>数字化管控<span>演示驾驶舱</span></h1><p>A 线 · 立库灌装线 · 仿真环境</p></div>
+  </div>
+  <div class="tr">
+    <span class="pill sim">仿真环境</span>
+    <span class="pill" id="rolePill">未登录</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</div>
+
+<div class="nav" id="nav"></div>
+
+<!-- ========== 0 启动自检 ========== -->
+<section class="screen" id="s-init">
+  <div class="card">
+    <div class="ch"><h2>系统启动自检 · WMS 初始化</h2><span class="m" id="initMeta">班前并行作业 · 单击一次约 6 秒跑完</span></div>
+    <div class="check" id="initSteps"></div>
+    <div style="margin-top:13px;display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+      <button class="btn pri" onclick="runInit()">执行初始化</button>
+      <button class="btn" onclick="runInit(true)">重跑自检</button>
+      <span style="font-size:11px;color:var(--dim2)">四步全通过后，采集通道才允许开启</span>
+    </div>
+    <div class="status-row" style="margin-top:12px">
+      <span class="st" id="beatSt"><i class="dot" style="color:var(--dim2)"></i>心跳 D130 未启动</span>
+      <span class="st" id="beatNum" style="font-family:var(--mono)">D130 = —</span>
+    </div>
+    <div id="beatBars" style="display:flex;gap:4px;margin-top:9px;height:26px;align-items:flex-end"></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>启动结果</h2><span class="m">台账 / 溯源库 / 通讯链路 / 采集通道</span></div>
+    <div class="kpis" id="initKpi"></div>
+  </div>
+</section>
+
+<!-- ========== 1 登录 ========== -->
+<section class="screen on" id="s-login">
+  <div class="card">
+    <div class="ch"><h2>分级权限登录</h2><span class="m">权责分离 · 授权最小化</span></div>
+    <div class="roles" id="roles"></div>
+    <div class="login-state" id="loginState">请选择岗位账号进入系统。未登录时所有功能不可用。</div>
+  </div>
+</section>
+
+<!-- ========== 2 手动轴控 ========== -->
+<section class="screen" id="s-manual">
+  <div class="card">
+    <div class="ch"><h2>手动模式 · 轴控</h2>
+      <span class="m" id="latHint"></span>
+      <div style="margin-left:12px" class="switch">
+        <button class="on" id="mManual" onclick="setMode('manual')">手动</button>
+        <button id="mAuto" onclick="setMode('auto')">自动</button>
+      </div>
+    </div>
+    <div class="ctrl-wrap">
+      <div>
+        <div class="axis-tabs">
+          <button class="on" id="axX" onclick="selAxis('X')">X 轴（水平）</button>
+          <button id="axY" onclick="selAxis('Y')">Y 轴（垂直）</button>
+        </div>
+        <div class="btns">
+          <button class="jb" onclick="jog(1)">正转 ▶</button>
+          <button class="jb" onclick="jog(-1)">反转 ◀</button>
+          <button class="jb wide" onclick="stopAx()">停止 ■</button>
+          <button class="jb wide" onclick="homeAx()">回原点 ⌂</button>
+        </div>
+        <div class="readout">
+          <div class="ro"><div class="l">X 轴位置</div><div class="v"><span id="posX">1200</span><small> mm</small></div></div>
+          <div class="ro"><div class="l">Y 轴位置</div><div class="v"><span id="posY">800</span><small> mm</small></div></div>
+          <div class="ro"><div class="l">响应延迟</div><div class="v"><span id="lat">—</span><small> ms</small></div></div>
+          <div class="ro"><div class="l">指令计数</div><div class="v"><span id="cnt">0</span><small> 次</small></div></div>
+        </div>
+        <div class="status-row">
+          <span class="st"><i class="dot blink" style="color:var(--green)"></i>伺服已使能</span>
+          <span class="st"><i class="dot" style="color:var(--green)"></i>通信正常</span>
+          <span class="st" id="faultState"><i class="dot" style="color:var(--green)"></i>地址绑定正常</span>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+      <div>
+        <div class="stage" id="stage">
+          <div class="rack" id="rack"></div>
+          <div class="stacker" id="stacker" style="left:40%;bottom:30%">X/Y</div>
+          <div class="axis-lab-x"><span>X:0</span><span>3000</span><span>6000</span></div>
+          <div class="axis-lab-y"><span>Y:6000</span><span>3000</span><span>0</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--dim2);margin-top:8px">
+          演示提示：先点 X 轴正转（正常响应），再切 Y 轴点击（故障注入后无响应）。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 3 故障排查 ========== -->
+<section class="screen" id="s-diag">
+  <div class="card">
+    <div class="ch"><h2>故障排查 · 先硬件后软件</h2><span class="m">目标：定位"Y 轴无响应"</span></div>
+    <div class="check" id="checks"></div>
+    <div class="mon" id="monitor"></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>点位绑定对照表</h2><span class="m" id="addrMeta"></span></div>
+    <table id="addrTable"></table>
+    <div style="margin-top:13px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn pri" onclick="fixAddr()">修正地址并重新测试</button>
+      <button class="btn warn" onclick="injectFault(true)">重新注入故障</button>
+      <button class="btn" onclick="go('trace')">去溯源页面</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4 通讯采集 ========== -->
+<section class="screen" id="s-comm">
+  <div class="card">
+    <div class="ch"><h2>Modbus TCP 通讯点位</h2><span class="m">触摸屏 ⇄ PLC：192.168.6.2 · 端口 502 · 站号 1</span></div>
+    <table id="commTable">
+      <thead><tr><th>序号</th><th>采集对象</th><th>Modbus 地址</th><th>PLC 地址</th><th>数据类型</th><th>采样周期</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>立库 X 轴当前位置</td><td>4x0101</td><td>DD100（D100+D101）</td><td>32 位浮点</td><td>100 ms</td><td>位置回显 / 曲线</td></tr>
+        <tr><td>02</td><td>立库 Y 轴当前位置</td><td>4x0103</td><td>DD102（D102+D103）</td><td>32 位浮点</td><td>100 ms</td><td>位置回显 / 曲线</td></tr>
+        <tr><td>03</td><td>轴运行状态</td><td>0x0020</td><td>M20（运行中）</td><td>位（BOOL）</td><td>100 ms</td><td>状态灯</td></tr>
+        <tr><td>04</td><td>轴报警字</td><td>4x0110</td><td>D110</td><td>16 位整数</td><td>100 ms</td><td>报警提示</td></tr>
+        <tr><td>05</td><td>称重稳定值</td><td>4x0120</td><td>D120</td><td>16 位整数（0.1 g）</td><td>50 ms</td><td>重量曲线 / 判定</td></tr>
+        <tr><td>06</td><td>称重传感器原始值</td><td>4x0122</td><td>D122（模拟量通道 VI0）</td><td>16 位整数</td><td>50 ms</td><td>标定比对</td></tr>
+        <tr><td>07</td><td>采集心跳计数</td><td>4x0130</td><td>D130（每 10 ms +1）</td><td>16 位整数</td><td>100 ms</td><td>丢包判定</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:11px;font-size:11.5px;color:var(--dim2);line-height:1.8">
+      校验方式：① 读回值与 PLC 内部值逐点比对；② 心跳计数两次采样差值应等于 10，小于 10 即丢包；③ 连续 30 个周期无超时视为链路稳定。
+    </div>
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn" onclick="addPoint()">后台新增采集点位</button>
+      <button class="btn" onclick="toast('配置已下发至触摸屏：重启采集服务后生效', 'ok')">下发配置</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><h2>实时采集曲线</h2><span class="m" id="commMeta">采样 100 ms · 窗口 12 s</span></div>
+    <div class="chartbox">
+      <div class="gl"></div>
+      <svg id="curve" viewBox="0 0 600 186" preserveAspectRatio="none">
+        <polyline id="lineP" fill="none" stroke="#38bdf8" stroke-width="1.6" points=""></polyline>
+        <polyline id="lineW" fill="none" stroke="#2dd4bf" stroke-width="1.6" points=""></polyline>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#38bdf8"></i>X 轴位置（0–6000 mm）</span>
+      <span><i style="background:#2dd4bf"></i>重量（495–505 g）</span>
+      <span style="margin-left:auto">窗口 120 点</span>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn warn" onclick="injectTimeout()">注入一次通信超时</button>
+      <button class="btn" onclick="clearCommStat()">恢复并清零统计</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5 KPI ========== -->
+<section class="screen" id="s-kpi">
+  <div class="card">
+    <div class="ch"><h2>实时运营 KPI</h2><span class="m">每 3 秒刷新 · 仿真采集</span></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="mini">
+      <div>
+        <div style="font-size:11.5px;color:var(--dim)">吞吐量趋势（件 / 10min）</div>
+        <div class="bars" id="bars"></div>
+        <div class="xa" id="xa"></div>
+      </div>
+      <div>
+        <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px">设备利用率</div>
+        <div id="devs"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5 溯源 ========== -->
+<section class="screen" id="s-trace">
+  <div class="card">
+    <div class="ch"><h2>供应链全链路溯源</h2><span class="m" id="traceMeta">批次级追溯 · 正反向可查</span></div>
+    <div class="search">
+      <input id="q" placeholder="输入批次号 / 物料号，例：PC-1120-B 或 WL-1121-0007">
+      <button class="btn" onclick="doQuery()">查询</button>
+      <button class="btn pri" onclick="toggleDir()" id="dirBtn">切换为反向追溯</button>
+      <button class="btn warn" onclick="openReport()">生成审计报告</button>
+      <button class="btn dang" onclick="simAlert()">模拟链条抖动</button>
+    </div>
+    <div class="tl-wrap">
+      <div class="card mat" id="matCard" style="background:rgba(23,35,40,.4)"></div>
+      <div><div class="tl" id="timeline" style="font-family:var(--sans)"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>异常事件台账 · 手工录入</h2><span class="m" id="evMeta">0 条记录 · 未归档</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px">
+      <input id="evType" placeholder="事件类型，例如：输送线卡料" style="background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:12.5px;outline:none">
+      <input id="evNode" placeholder="关联节点，例如：成品出库" style="background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:12.5px;outline:none">
+      <input id="evAction" placeholder="处置动作，例如：停机→清理异物→复位→试运行" style="background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:12.5px;outline:none">
+      <input id="evOwner" placeholder="处置人，例如：设备运维岗 李工" style="background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:12.5px;outline:none">
+    </div>
+    <table id="evTable"></table>
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn pri" onclick="logAnomaly()">添加这条记录</button>
+      <button class="btn" onclick="fillSample()">填一条示例</button>
+      <button class="btn warn" onclick="archiveAnomaly()">归档全部</button>
+      <button class="btn" onclick="exportAnomaly()">导出异常台账 CSV</button>
+    </div>
+    <div style="margin-top:9px;font-size:11px;color:var(--dim2)">四个框留空直接点「添加这条记录」，会用示例内容填入；填了内容就按你填的记。</div>
+  </div>
+  <div class="card" id="alertCard" style="display:none;border-color:rgba(244,112,108,.4);background:rgba(244,112,108,.05)">
+    <div class="ch"><h2 style="color:var(--red)">异常预警 · 已派发工单</h2><span class="m" id="alertTime"></span></div>
+    <div class="tower"><div class="lamp r on"></div><div class="lamp y"></div><div class="lamp g"></div>
+      <div style="font-size:11.5px;color:var(--dim);margin-left:8px;align-self:center">塔灯红色 · Y0 输出</div></div>
+    <div id="ticket" style="font-size:12.5px;line-height:1.9"></div>
+  </div>
+</section>
+
+<!-- ========== 8 物流节点 ========== -->
+<section class="screen" id="s-node">
+  <div class="card">
+    <div class="ch"><h2>物流节点配置 · 出库转运 → 工位配送 → 入库暂存</h2><span class="m" id="nodeMeta">到位信号触发 · 时间戳自动生成</span></div>
+    <table id="nodeTable"></table>
+    <div style="margin-top:11px;font-size:11.5px;color:var(--dim2);line-height:1.8">
+      节点规则：机器人到位信号上升沿触发一次节点记录；时间戳取自采集服务器，不由人工填写；节点间隔超时 90 秒自动标红，防止漏记录。
+    </div>
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn pri" onclick="runNode()">模拟一次机器人配送</button>
+      <button class="btn" onclick="resetNode()">重置节点记录</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>节点事件流</h2><span class="m" id="nodeSum">单趟配送时长：—</span></div>
+    <div class="log" id="nodeLog"><div>[待触发] 点「模拟一次机器人配送」，三个节点将依次打时间戳</div></div>
+  </div>
+</section>
+
+<!-- ========== 9 运营报表 ========== -->
+<section class="screen" id="s-report">
+  <div class="card">
+    <div class="ch"><h2>作业优化前后对比</h2><span class="m">同一采集链路统计 · 口径一致才可比</span></div>
+    <table id="repTable"></table>
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn pri" onclick="exportReport()">导出对比表 CSV</button>
+      <button class="btn" onclick="toast('已刷新本次统计区间：08:00—09:40', 'ok')">刷新统计</button>
+    </div>
+    <div style="margin-top:9px;font-size:11px;color:var(--dim2)">表格里每个格子都能直接改，改完点导出，CSV 就是你改后的数值。</div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>指标对比图</h2><span class="m">灰＝优化前　青＝优化后</span></div>
+    <div id="repBars"></div>
+  </div>
+</section>
+
+<!-- ========== 7 参数配置（仅管理员） ========== -->
+<section class="screen" id="s-config">
+  <div class="card">
+    <div class="ch"><h2>轴组参数配置</h2><span class="m">管理员专属 · 操作工不可见</span></div>
+    <table>
+      <thead><tr><th>轴</th><th>轴类型</th><th>指令通道</th><th>单位</th><th>每圈脉冲数</th><th>每圈移动量</th></tr></thead>
+      <tbody>
+        <tr><td>0 号轴（X）</td><td>实轴</td><td>EtherCAT</td><td>mm</td><td>524288</td><td>10</td></tr>
+        <tr><td>1 号轴（Y）</td><td>实轴</td><td>EtherCAT</td><td>mm</td><td>524288</td><td>10</td></tr>
+        <tr><td>2 号轴</td><td>实轴</td><td>EtherCAT</td><td>mm</td><td>131072</td><td>25</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:11.5px;color:var(--dim2)">
+      轴组：BMC_Group000(0)，运动学类型 XY，配置轴号 0 / 1 —— 与 PLC 程序中“轴选择”D200 取值（0=X，1=Y）一一对应。
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><h2>用户与权限</h2><span class="m">权责分离</span></div>
+    <table>
+      <thead><tr><th>账号</th><th>岗位</th><th>授权模块</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>admin</td><td>管理员</td><td>全部 6 项</td><td style="color:var(--green)">启用</td></tr>
+        <tr><td>op01</td><td>操作工</td><td>手动轴控 / 排查 / KPI / 溯源</td><td style="color:var(--green)">启用</td></tr>
+        <tr><td>qc01</td><td>质检员</td><td>KPI / 溯源审计</td><td style="color:var(--green)">启用</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+
+<!-- 审计报告弹窗 -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="box">
+    <h3>批次合规审计报告</h3>
+    <div class="sub" id="reportSub"></div>
+    <div id="reportBody"></div>
+    <div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn pri" onclick="printReport()">打印 / 另存为 PDF</button>
+      <button class="btn" onclick="downloadReport()">下载 HTML</button>
+      <button class="btn" onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="reportPrint" style="display:none"></div>
+
+<script>
+/* =========================================================
+   0. 基础
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+let role = null;
+
+const ROLES = [
+  { id:'admin', name:'管理员', icon:'⚙', desc:'参数配置、轴组标定、故障注入、用户管理',
+    perms:['init','manual','diag','comm','kpi','trace','node','report','config'], tags:['全部模块','可注入故障'] },
+  { id:'op', name:'操作工', icon:'🛠', desc:'手动轴控、现场排查、状态监视与溯源查询',
+    perms:['init','manual','diag','comm','kpi','trace','node','report'], tags:['无参数权限','不可改轴参数'] },
+  { id:'qc', name:'质检员', icon:'🔬', desc:'质检结果、批次溯源与审计报告',
+    perms:['init','comm','kpi','trace','node','report'], tags:['追溯审计','预警接收'] }
+];
+
+const NAV = [
+  { id:'init',   n:'00', t:'启动自检' },
+  { id:'login',  n:'01', t:'登录' },
+  { id:'manual', n:'02', t:'手动轴控' },
+  { id:'diag',   n:'03', t:'故障排查' },
+  { id:'comm',   n:'04', t:'通讯采集' },
+  { id:'kpi',    n:'05', t:'运营 KPI' },
+  { id:'trace',  n:'06', t:'溯源审计' },
+  { id:'config', n:'07', t:'参数配置' },
+  { id:'node',   n:'08', t:'物流节点' },
+  { id:'report', n:'09', t:'运营报表' }
+];
+
+/* =========================================================
+   1. 设备与故障状态
+   ========================================================= */
+const dev = {
+  x:1200, y:800, xMax:6000, yMax:6000,
+  axis:'X', mode:'manual',
+  fault:false,            // true = Y 轴轴选择绑到错误地址 D300
+  latency:null, cnt:0,
+  moving:false
+};
+
+/* =========================================================
+   2. 登录与权限
+   ========================================================= */
+function buildRoles(){
+  $('roles').innerHTML = ROLES.map(r => `
+    <div class="role" onclick="login('${r.id}')">
+      <div class="ic">${r.icon}</div>
+      <h3>${r.name}</h3>
+      <p>${r.desc}</p>
+      <div class="tags">${r.tags.map(t=>`<span class="tag ok">${t}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function login(id){
+  role = ROLES.find(r => r.id === id);
+  $('rolePill').textContent = role.name + ' 已登录';
+  $('rolePill').className = 'pill on';
+  $('loginState').innerHTML =
+    `当前账号：<b style="color:var(--teal)">${role.name}</b> · 授权模块 ${role.perms.length} 项 —— 未授权模块已置灰，符合权责分离要求。`;
+  buildNav();
+  addLog(`登录成功：${role.name}，授权 ${role.perms.join(' / ')}`);
+  go('init');
+}
+
+function buildNav(){
+  $('nav').innerHTML = NAV.map(n => {
+    const allowed = n.id === 'login' || (role && role.perms.includes(n.id));
+    return `<button data-v="${n.id}" class="${allowed?'':'locked'}"
+      onclick="${allowed?`go('${n.id}')`:`denied('${n.t}')`}">
+      <span class="num">${n.n}</span>${n.t}${allowed?'':'<span class="lock">🔒</span>'}</button>`;
+  }).join('');
+  markNav();
+}
+
+function denied(name){
+  toast(`当前账号无「${name}」权限，已按最小授权原则拦截`, 'bad');
+  addLog(`权限拦截：${role?role.name:'未登录'} 尝试进入「${name}」`, 'err');
+}
+
+function markNav(){
+  document.querySelectorAll('#nav button').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === current);
+  });
+}
+
+/* =========================================================
+   3. 屏幕切换
+   ========================================================= */
+let current = 'login';
+function go(v){
+  const n = NAV.find(x => x.id === v);
+  if (v !== 'login' && (!role || !role.perms.includes(v))) { denied(n ? n.t : v); return; }
+  current = v;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + v));
+  markNav();
+  if (v === 'init') renderInit();
+  if (v === 'diag') renderDiag();
+  if (v === 'comm') renderComm();
+  if (v === 'kpi') renderKPI();
+  if (v === 'trace') renderTrace();
+  if (v === 'node') renderNode();
+  if (v === 'report') renderReport();
+}
+
+/* =========================================================
+   4. 日志
+   ========================================================= */
+function addLog(msg, cls){
+  const el = document.createElement('div');
+  if (cls) el.className = cls;
+  const t = new Date();
+  el.innerHTML = `<span style="color:#5d737c">[${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}]</span> ${msg}`;
+  const log = $('log');
+  log.insertBefore(el, log.firstChild);
+  while (log.children.length > 40) log.removeChild(log.lastChild);
+}
+
+function toast(msg, kind){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast on ' + (kind || '');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.className = 'toast', 2600);
+}
+
+/* =========================================================
+   5. 手动轴控
+   ========================================================= */
+function setMode(m){
+  dev.mode = m;
+  $('mManual').classList.toggle('on', m === 'manual');
+  $('mAuto').classList.toggle('on', m === 'auto');
+  addLog(m === 'manual' ? '切换至手动模式，允许单轴点动' : '切换至自动模式，手动按钮锁定');
+}
+function selAxis(a){
+  dev.axis = a;
+  $('axX').classList.toggle('on', a === 'X');
+  $('axY').classList.toggle('on', a === 'Y');
+  addLog(`当前操作轴切换为 ${a} 轴`);
+}
+
+function renderStage(){
+  const st = $('stacker');
+  st.style.left = (2 + dev.x / dev.xMax * 78).toFixed(2) + '%';
+  st.style.bottom = (4 + dev.y / dev.yMax * 84).toFixed(2) + '%';
+  $('posX').textContent = Math.round(dev.x);
+  $('posY').textContent = Math.round(dev.y);
+}
+
+function jog(dir){
+  const t0 = performance.now();
+  dev.cnt++;
+  $('cnt').textContent = dev.cnt;
+
+  if (dev.mode !== 'manual') { toast('自动模式下手动按钮已锁定', 'bad'); return; }
+  if (dev.axis === 'Y' && dev.fault) {
+    // 故障：地址绑错，指令未到达 PLC
+    $('lat').textContent = '—';
+    addLog(`Y 轴正转指令写入 <b>D300</b>，PLC 读取 <b>D200</b> —— 指令未到达 PLC`, 'err');
+    toast('Y 轴无响应：指令地址绑定错误（见排查页）', 'bad');
+    $('faultState').innerHTML = '<i class="dot" style="color:var(--red)"></i>地址绑定异常';
+    return;
+  }
+  const step = 60 * dir;
+  if (dev.axis === 'X') dev.x = Math.max(0, Math.min(dev.xMax, dev.x + step));
+  else dev.y = Math.max(0, Math.min(dev.yMax, dev.y + step));
+  renderStage();
+  // 实测帧耗时 + 模拟总线传输开销（仿真环境口径）
+  const cost = Math.round(performance.now() - t0) + 7;
+  dev.latency = cost;
+  $('lat').textContent = cost;
+  addLog(`${dev.axis} 轴 ${dir>0?'正转':'反转'}：写入 <b>${dev.axis==='X'?'M0 / D200=0':'M1 / D200=1'}</b>，位置 ${Math.round(dev.axis==='X'?dev.x:dev.y)} mm，响应 ${cost} ms`, 'ok');
+  $('faultState').innerHTML = '<i class="dot" style="color:var(--green)"></i>地址绑定正常';
+}
+
+function stopAx(){ addLog('停止指令下发，轴已减速停止'); toast('已停止', 'ok'); }
+function homeAx(){
+  if (dev.axis === 'Y' && dev.fault) { toast('Y 轴无响应：地址绑定错误', 'bad'); return; }
+  if (dev.axis === 'X') dev.x = 0; else dev.y = 0;
+  renderStage(); addLog('回原点完成（BMC_A_ZRN）', 'ok');
+  toast('回原点完成', 'ok');
+}
+
+/* =========================================================
+   6. 故障排查
+   ========================================================= */
+const CHECKS = [
+  { id:'net',  t:'网线 / 交换机链路', em:'物理层', r:'指示灯常亮' },
+  { id:'run',  t:'PLC 运行状态', em:'RUN 灯', r:'RUN 常亮' },
+  { id:'seg',  t:'PLC 与触摸屏同网段', em:'192.168.6.x', r:'同网段' },
+  { id:'link', t:'Modbus TCP 通信测试', em:'502 端口', r:'测试成功' }
+];
+let checkState = {};
+
+function renderDiag(){
+  $('checks').innerHTML = CHECKS.map((c,i) => {
+    const pass = checkState[c.id];
+    return `<div class="ck ${pass?'pass':''}">
+      <div class="i">${i+1}</div>
+      <div class="t">${c.t}<em>${c.em}</em></div>
+      <div class="r">${pass ? '✓ ' + c.r : '待检测'}</div>
+      <button class="b" onclick="runCheck('${c.id}')">检测</button>
+    </div>`;
+  }).join('');
+
+  $('monitor').innerHTML = `
+    <div class="bit ${mon.m0?'lit':''}"><i class="dot"></i>M0 · X 轴正转</div>
+    <div class="bit ${mon.m1?'lit':''}"><i class="dot"></i>M1 · Y 轴正转</div>
+    <div class="bit"><i class="dot"></i>D200 · 轴选择 = ${mon.d200}</div>
+    <div class="bit" style="color:var(--dim)">提示：点 X 轴见 M0 亮，点 Y 轴 M1 不亮，即定位到点位问题</div>`;
+
+  $('addrMeta').textContent = dev.fault
+    ? '发现 1 处不匹配（红色标注）'
+    : '全部匹配，无异常';
+
+  $('addrTable').innerHTML = `
+    <thead><tr><th>HMI 画面</th><th>按钮</th><th>HMI 写入地址</th><th>PLC 程序读取</th><th>一致性</th></tr></thead>
+    <tbody>
+      <tr><td>手动轴控</td><td>X 轴正转</td><td>M0 / D200 = 0</td><td>M0 / D200</td><td style="color:var(--green)">✔ 一致</td></tr>
+      <tr><td>手动轴控</td><td>X 轴反转</td><td>M2 / D200 = 0</td><td>M2 / D200</td><td style="color:var(--green)">✔ 一致</td></tr>
+      <tr>
+        <td>手动轴控</td><td>Y 轴正转</td>
+        <td class="${dev.fault?'mis':''}">M1 / ${dev.fault?'D300 = 1':'D200 = 1'}</td>
+        <td>M1 / D200</td>
+        <td style="color:${dev.fault?'var(--red)':'var(--green)'}">${dev.fault?'✘ 不匹配':'✔ 一致'}</td>
+      </tr>
+      <tr>
+        <td>手动轴控</td><td>Y 轴反转</td>
+        <td class="${dev.fault?'mis':''}">M3 / ${dev.fault?'D300 = 1':'D200 = 1'}</td>
+        <td>M3 / D200</td>
+        <td style="color:${dev.fault?'var(--red)':'var(--green)'}">${dev.fault?'✘ 不匹配':'✔ 一致'}</td>
+      </tr>
+    </tbody>`;
+}
+
+const mon = { m0:false, m1:false, d200:0 };
+
+function runCheck(id){
+  checkState[id] = true;
+  addLog('排查：' + CHECKS.find(c => c.id === id).t + ' → 正常', 'ok');
+  renderDiag();
+  if (CHECKS.every(c => checkState[c.id])) {
+    addLog('硬件四项全部正常 → 问题锁定在组态点位绑定', 'ok');
+    toast('硬件排除完毕，请核对地址对照表', 'ok');
+  }
+}
+
+function injectFault(on){
+  dev.fault = !!on;
+  $('faultState').innerHTML = on
+    ? '<i class="dot" style="color:var(--red)"></i>地址绑定异常'
+    : '<i class="dot" style="color:var(--green)"></i>地址绑定正常';
+  mon.d200 = on ? 1 : 0;
+  addLog(on ? '已注入故障：Y 轴按钮"轴选择"写入 D300（PLC 读取 D200）' : '故障已恢复', on ? 'err' : 'ok');
+  renderDiag();
+}
+
+function fixAddr(){
+  dev.fault = false;
+  mon.d200 = 1;
+  $('faultState').innerHTML = '<i class="dot" style="color:var(--green)"></i>地址绑定正常';
+  addLog('已修正 D300 → D200，重新下载触摸屏工程', 'ok');
+  renderDiag();
+  toast('地址已修正，请返回手动页重测 Y 轴', 'ok');
+}
+
+/* 监控位：手动页每点一次同步点亮 */
+function flashBit(which){
+  mon[which] = true;
+  renderDiag();
+  setTimeout(() => { mon[which] = false; renderDiag(); }, 1200);
+}
+
+/* =========================================================
+   6.5 通讯采集与稳定性校验
+   ========================================================= */
+let timeoutPending = false;
+const comm = { n:0, to:0, bufP:[], bufW:[], jitterMax:0, last:0 };
+
+function tickComm(){
+  comm.n++;
+  if (timeoutPending){
+    comm.to++; timeoutPending = false;
+    addLog('采样超时：应答超过 500 ms 未返回，已标记丢弃 1 点', 'err');
+    renderMetrics();
+  }
+  const ph = performance.now();
+  if (comm.last){
+    const dt = ph - comm.last;
+    if (dt > 40 && dt < 400) comm.jitterMax = Math.max(comm.jitterMax, Math.abs(dt - 100));
+  }
+  comm.last = ph;
+
+  const w = 500 + Math.sin(comm.n/9)*1.6 + (Math.random()-0.5)*0.5;   // 重量微波动
+  const p = dev.x + Math.sin(comm.n/7)*18;                            // 位置伺服微抖动
+  comm.bufW.push(w); comm.bufP.push(p);
+  if (comm.bufW.length > 120){ comm.bufW.shift(); comm.bufP.shift(); }
+
+  drawCurve();
+  if (comm.n % 5 === 0) renderMetrics();
+}
+
+function drawCurve(){
+  const N = 120;
+  const build = (arr, mapY) => arr.map((v,i) =>
+    `${(i/(N-1)*600).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
+  const wY = v => 186 - ((v - 495) / 10) * 150;
+  const pY = v => 186 - (v / 6000) * 150;
+  $('lineW').setAttribute('points', build(comm.bufW, wY));
+  $('lineP').setAttribute('points', build(comm.bufP, pY));
+}
+
+function renderMetrics(){
+  const total = comm.n || 1;
+  const loss = comm.to / total * 100;
+  const jitter = Math.min(20, Math.round(comm.jitterMax));
+  $('metrics').innerHTML = `
+    <div class="metric"><div class="l">采样次数</div><div class="v">${comm.n}<small> 次</small></div></div>
+    <div class="metric"><div class="l">超时次数</div><div class="v" style="color:${comm.to?'var(--red)':'var(--txt)'}">${comm.to}<small> 次</small></div></div>
+    <div class="metric"><div class="l">丢包率</div><div class="v" style="color:${loss>0.5?'var(--red)':'var(--teal)'}">${loss.toFixed(2)}<small> %</small></div></div>
+    <div class="metric"><div class="l">平均响应</div><div class="v">7<small> ms</small></div></div>
+    <div class="metric"><div class="l">最大抖动</div><div class="v">${jitter}<small> ms</small></div></div>`;
+  $('commMeta').textContent = '采样 100 ms · 窗口 12 s · 设备 192.168.6.2:502';
+}
+
+function renderComm(){ drawCurve(); renderMetrics(); }
+function injectTimeout(){ timeoutPending = true; toast('已模拟一次应答超时，观察丢包率与超时次数', 'bad'); }
+function clearCommStat(){
+  comm.n = 0; comm.to = 0; comm.jitterMax = 0; comm.bufP = []; comm.bufW = [];
+  renderComm(); toast('统计已清零', 'ok');
+}
+
+/* =========================================================
+   7. KPI
+   ========================================================= */
+const kpiData = {
+  orders:[
+    { id:'SO-1121-01', plan:20, done:20 },{ id:'SO-1121-02', plan:18, done:16 },
+    { id:'SO-1121-03', plan:12, done:5 },{ id:'SO-1121-04', plan:8, done:0 },
+    { id:'SO-1121-05', plan:15, done:15 },{ id:'SO-1121-06', plan:6, done:2 }
+  ],
+  thru:[5,6,7,7,8,7,7,8,9],
+  labels:['08:00','08:10','08:20','08:30','08:40','08:50','09:00','09:10','09:20'],
+  devs:[
+    { n:'立库堆垛机', u:92 },{ n:'输送线', u:88 },{ n:'灌装转盘', u:85 },
+    { n:'六轴机械臂', u:81 },{ n:'称重模块', u:74 },{ n:'视觉相机', u:64 }
+  ],
+  ng:3
+};
+
+function renderKPI(){
+  const d = kpiData;
+  const done = d.orders.reduce((s,o)=>s+o.done,0);
+  const plan = d.orders.reduce((s,o)=>s+o.plan,0);
+  const last = d.thru[d.thru.length-1];
+  const util = d.devs.reduce((s,x)=>s+x.u,0)/d.devs.length;
+  const rate = (done - d.ng)/done*100;
+
+  $('kpis').innerHTML = `
+    <div class="kpi"><div class="l">今日产量</div><div class="v">${done}<small>件</small></div>
+      <div class="s">计划达成 ${Math.round(done/plan*100)}%</div></div>
+    <div class="kpi"><div class="l">当前吞吐量</div><div class="v">${last*6}<small>件/h</small></div>
+      <div class="s">设计产能 60 件/h</div></div>
+    <div class="kpi"><div class="l">设备综合利用率</div><div class="v">${util.toFixed(0)}<small>%</small></div>
+      <div class="s">6 台套加权 OEE</div></div>
+    <div class="kpi"><div class="l">质检合格率</div><div class="v">${rate.toFixed(1)}<small>%</small></div>
+      <div class="s">NG ${d.ng} 件 · 目标 ≥ 95%</div></div>`;
+
+  const max = Math.max(...d.thru) * 1.2;
+  $('bars').innerHTML = d.thru.map(v => `<div class="c"><div class="b" style="height:${(v/max*100).toFixed(0)}%"></div></div>`).join('');
+  $('xa').innerHTML = d.labels.map((l,i) => `<span style="${i===d.labels.length-1?'color:var(--cyan)':''}">${l}</span>`).join('');
+  $('devs').innerHTML = d.devs.map(x => `
+    <div class="devrow"><div class="n">${x.n}</div>
+      <div class="tr2"><i style="width:${x.u}%"></i></div>
+      <div class="p">${x.u}%</div></div>`).join('');
+}
+
+/* =========================================================
+   8. 溯源数据
+   ========================================================= */
+const batches = {
+  'PC-1120-B': {
+    material:'WL-1121-0007', batch:'PC-1120-B', product:'注射用头孢曲松钠 1.0 g',
+    raw:'原料批 RM-2026-0812（华北原料仓）', loc:'03（第1行/第3列）',
+    operator:'张工（操作工）', shift:'早班', receiver:'华东医药配送中心',
+    outNo:'OB-1121-0017', weight:500.6, verdict:'OK'
+  }
+};
+
+let curBatch = 'PC-1120-B';
+let reverse = false;
+
+function buildTimeline(b){
+  return [
+    { n:'原料入库', t:'08:12:35', ok:true, d:`原料批 <b>${b.raw}</b> 入库登记，双人复核，扫码建档` },
+    { n:'立库转运', t:'08:31:02', ok:true, d:`AGV + 堆垛机转运至取料位，库位 <b>${b.loc}</b>，轨迹留痕` },
+    { n:'加工灌装', t:'08:45:18', ok:true, d:`转盘定位，1 号罐下料，定量 <b>${259} mL</b>，设备编号 FILL-01` },
+    { n:'称重检测', t:'08:45:34', ok:true, d:`称重模块稳定值 <b>${b.weight} g</b>（目标 500 ± 5），判定 OK` },
+    { n:'视觉质检', t:'08:45:52', ok:true, d:`盒盖定位偏差 0.24 mm（阈值 1.0），判定 OK，图像存档 90 天` },
+    { n:'成品入位', t:'08:46:10', ok:true, d:`双轴插补至 <b>${b.loc}</b>，入位完成，库存台账同步` },
+    { n:'成品出库', t:'09:12:44', ok:true, d:`出库单 <b>${b.outNo}</b>，复核人 李工，装车温度记录 6.2 ℃` },
+    { n:'客户签收', t:'09:40:00', ok:true, d:`接收单位 <b>${b.receiver}</b> 签收，GSP 温湿度记录归档` }
+  ];
+}
+
+function renderTrace(){
+  const b = batches[curBatch];
+  if (!b) return;
+
+  $('matCard').innerHTML = `
+    <div class="id">${b.batch}</div>
+    <div class="row"><span>物料编码</span><b>${b.material}</b></div>
+    <div class="row"><span>产品</span><b>${b.product}</b></div>
+    <div class="row"><span>原料批次</span><b>${b.raw}</b></div>
+    <div class="row"><span>库位</span><b>${b.loc}</b></div>
+    <div class="row"><span>操作人</span><b>${b.operator}</b></div>
+    <div class="row"><span>接收单位</span><b>${b.receiver}</b></div>
+    <div class="row"><span>出库单号</span><b>${b.outNo}</b></div>
+    <div class="row"><span>称重</span><b>${b.weight} g</b></div>
+    <div class="verdict ok">✔ 全节点合规，可追溯、可审计</div>`;
+
+  const base = buildTimeline(b);
+  const evs = anomalyNodes(base);
+  $('timeline').innerHTML = reverse
+    ? evs.slice().reverse().map(e => tlNode(e)).join('')
+    : evs.map(e => tlNode(e)).join('');
+
+  $('dirBtn').textContent = reverse ? '切换为正向追溯' : '切换为反向追溯';
+  $('traceMeta').textContent = (reverse
+    ? '反向追溯：成品 → 原料批次 → 原料入库'
+    : '正向追溯：原料 → 加工 → 成品质检 → 出库签收') + ` · ${evs.length} 个节点`;
+}
+
+/* 异常处置节点：插入到「客户签收」之前 */
+function anomalyNodes(base){
+  if (!anomalies.length) return base;
+  const ins = anomalies.map(a => ({
+    n: `异常处置·${a.type}`,
+    t: a.t,
+    d: `<span style="color:var(--amber)">事件 <b>${a.id}</b></span>：${a.action}；处置人 ${a.owner}；
+        溯源节点已更新，异常记录${a.status === '已归档' ? '<b>已归档</b>' : '待归档'}`
+  }));
+  return [...base.slice(0, base.length - 1), ...ins, base[base.length - 1]];
+}
+
+/* =========================================================
+   8.5 异常事件台账
+   ========================================================= */
+let anomalies = [];
+let evSeq = 0;
+let sampleIdx = 0;
+const ANOMALY_PRESETS = [
+  { type:'输送线卡料', node:'成品出库', action:'安全停机 → 清理异物 → 手动复位 → 单点试运行', owner:'设备运维岗 李工' },
+  { type:'机器人到位超时', node:'工位配送', action:'切换备选路径 → 补发到位信号 → 复核坐标', owner:'机器人岗 王工' },
+  { type:'入库链条抖动', node:'立库转运', action:'锁定新任务 → 检查链条张紧度 / 链轮磨损 / 润滑 → 试运行复核', owner:'设备运维岗 李工' }
+];
+
+function fieldVal(id){
+  const el = $(id);
+  return el && el.value ? el.value.trim() : '';
+}
+
+function fillSample(){
+  const p = ANOMALY_PRESETS[sampleIdx % ANOMALY_PRESETS.length];
+  sampleIdx++;
+  $('evType').value = p.type;
+  $('evNode').value = p.node;
+  $('evAction').value = p.action;
+  $('evOwner').value = p.owner;
+  toast('已填入示例，可直接改字或直接添加', 'ok');
+}
+
+function logAnomaly(){
+  const p = ANOMALY_PRESETS[sampleIdx % ANOMALY_PRESETS.length];
+  const type = fieldVal('evType') || p.type;
+  const node = fieldVal('evNode') || p.node;
+  const action = fieldVal('evAction') || p.action;
+  const owner = fieldVal('evOwner') || p.owner;
+  const d = new Date();
+  anomalies.push({
+    id: 'EV-1121-' + pad(++evSeq).padStart(4, '0'),
+    type, node, action, owner,
+    t: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
+    status: '待归档'
+  });
+  ['evType','evNode','evAction','evOwner'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  renderEvTable(); renderTrace();
+  addLog(`异常事件已录入：${type}，溯源节点同步更新（新增「异常处置」节点）`, 'err');
+  toast('已记录：「' + type + '」，溯源时间轴已更新', 'bad');
+}
+
+function archiveAnomaly(){
+  if (!anomalies.length) { toast('台账为空，先录入一条异常事件', 'bad'); return; }
+  const pending = anomalies.filter(a => a.status === '待归档');
+  if (!pending.length) { toast('所有异常记录均已归档', 'ok'); return; }
+  pending.forEach(a => { a.status = '已归档'; });
+  renderEvTable(); renderTrace();
+  addLog(`异常记录已归档：${pending.length} 条，归档人 信息化岗，可随批次审计报告导出`, 'ok');
+  toast('已更新溯源节点，异常事件已记录归档', 'ok');
+}
+
+function renderEvTable(){
+  const rows = anomalies.length ? anomalies.map(a => `
+    <tr><td>${a.id}</td><td style="font-family:var(--sans)">${a.type}</td><td>${a.t}</td>
+      <td style="font-family:var(--sans)">${a.node}</td>
+      <td style="font-family:var(--sans)">${a.action}</td>
+      <td style="font-family:var(--sans)">${a.owner}</td>
+      <td style="color:${a.status === '已归档' ? 'var(--green)' : 'var(--amber)'}">${a.status}</td></tr>`).join('')
+    : `<tr><td colspan="7" style="color:var(--dim2);font-family:var(--sans)">暂无记录 —— 点「录入卡料异常事件」模拟一次现场异常</td></tr>`;
+  $('evTable').innerHTML =
+    `<thead><tr><th>事件编号</th><th>事件类型</th><th>发生时间</th><th>关联节点</th><th>处置动作</th><th>处置人</th><th>归档状态</th></tr></thead>
+     <tbody>${rows}</tbody>`;
+  const pend = anomalies.filter(a => a.status === '待归档').length;
+  $('evMeta').textContent = anomalies.length
+    ? `${anomalies.length} 条记录 · 待归档 ${pend} 条`
+    : '0 条记录 · 未归档';
+}
+
+function exportAnomaly(){
+  if (!anomalies.length) { toast('台账为空，先录入一条异常事件', 'bad'); return; }
+  const lines = ['事件编号,事件类型,发生时间,关联节点,处置动作,处置人,归档状态'];
+  anomalies.forEach(a => lines.push([a.id, a.type, a.t, a.node, a.action, a.owner, a.status].join(',')));
+  const csv = '\uFEFF' + lines.join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '异常事件台账.csv';
+  a.click();
+  addLog('异常事件台账已导出：' + anomalies.length + ' 条', 'ok');
+  toast('台账已下载，可直接附进审计材料', 'ok');
+}
+
+function tlNode(e){
+  return `<div class="tl"><div class="n"></div>
+    <div class="h"><span class="nm">${e.n}</span><span class="tm">${e.t}</span></div>
+    <div class="d">${e.d}</div></div>`;
+}
+
+function toggleDir(){
+  reverse = !reverse;
+  renderTrace();
+  addLog(reverse ? '切换为反向追溯：成品 → 原料' : '切换为正向追溯：原料 → 成品', 'ok');
+}
+
+function doQuery(){
+  const q = $('q').value.trim().toUpperCase();
+  const hit = Object.keys(batches).find(k =>
+    k.toUpperCase() === q || batches[k].material.toUpperCase() === q);
+  if (!hit) { toast('未找到该批次，请试 PC-1120-B', 'bad'); return; }
+  curBatch = hit; renderTrace(); addLog('溯源查询：' + hit, 'ok');
+}
+
+/* =========================================================
+   9. 审计报告 & 预警
+   ========================================================= */
+function openReport(){
+  const b = batches[curBatch];
+  const evs = buildTimeline(b);
+  $('reportSub').textContent = `报告编号 ADT-${new Date().getFullYear()}-1121-01 · 批次 ${b.batch} · 生成时间 ${new Date().toLocaleString('zh-CN')}`;
+  $('reportBody').innerHTML = `
+    <table style="font-size:11.5px">
+      <thead><tr><th>序号</th><th>节点</th><th>时间</th><th>记录内容</th><th>判定</th></tr></thead>
+      <tbody>${evs.map((e,i)=>`<tr>
+        <td>${i+1}</td><td style="font-family:var(--sans)">${e.n}</td><td>${e.t}</td>
+        <td style="font-family:var(--sans)">${e.d.replace(/<[^>]+>/g,'')}</td>
+        <td style="color:var(--green)">OK</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="margin-top:14px;font-size:11.5px;color:var(--dim2);line-height:1.9">
+      结论：该批次 ${b.batch} 全链路 ${evs.length} 个节点记录完整，数据校验一致，符合批次级追溯要求。<br>
+      记录人：系统自动生成 ｜ 复核：${b.operator} ｜ 归档：只读存储，任何修改留痕
+    </div>`;
+  $('modal').classList.add('on');
+  addLog('已生成审计报告 ADT-1121-01', 'ok');
+}
+function closeModal(){ $('modal').classList.remove('on'); }
+
+function printReport(){
+  const html = `<h2 style="font-family:sans-serif">批次合规审计报告</h2>
+    <p style="font-size:12px">${$('reportSub').textContent}</p>${$('reportBody').innerHTML}`;
+  $('reportPrint').innerHTML = html;
+  $('reportPrint').style.display = 'block';
+  window.print();
+  setTimeout(() => { $('reportPrint').style.display = 'none'; }, 300);
+}
+
+function downloadReport(){
+  const html = `<!DOCTYPE html><meta charset="utf-8"><title>审计报告 ${batches[curBatch].batch}</title>
+    <body style="font-family:system-ui;padding:32px">${$('reportSub').textContent?`<p>${$('reportSub').textContent}</p>`:''}${$('reportBody').innerHTML}</body>`;
+  const blob = new Blob([html], { type:'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `审计报告_${batches[curBatch].batch}.html`;
+  a.click();
+  toast('报告已下载，可用浏览器打开后另存为 PDF', 'ok');
+}
+
+const alerts = [];
+function simAlert(){
+  $('alertCard').style.display = 'block';
+  const t = new Date();
+  $('alertTime').textContent = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())} · 已推送设备运维岗`;
+  $('ticket').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+      <div><span style="color:var(--dim)">工单号</span><br><b style="font-family:var(--mono)">WO-1121-0011</b></div>
+      <div><span style="color:var(--dim)">触发规则</span><br><b>链条振动 / 电流波动超限</b></div>
+      <div><span style="color:var(--dim)">处置时限</span><br><b>20 分钟</b></div>
+    </div>
+    入库输送链单元 <b style="font-family:var(--mono)">CHAIN-IN-01</b> 振动幅值 <b style="color:var(--red)">215</b>（阈值 180），
+    电机电流周期性波动 <b style="color:var(--red)">±1.9 A</b>；当前未发生跳齿、卡料停机，预判持续运行会出现链条跳齿、物料倾覆。
+    已锁定该输送单元新任务下发，建议检查链条张紧度、链轮磨损与润滑状态，择机保养。
+    责任人：设备运维岗 李工 · 状态：<b style="color:var(--amber)">待处置</b>`;
+  addLog('异常预警触发：入库链条振动 / 电流波动超限，已派发工单 WO-1121-0011，塔灯 Y0 变红', 'err');
+  toast('异常预警已触发：界面弹窗 + 塔灯 + 工单', 'bad');
+}
+
+/* =========================================================
+   10. 时钟与初始化
+   ========================================================= */
+function clock(){
+  const d = new Date();
+  $('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// 启动序列已移到脚本末尾（见「14. 启动」），避免在常量声明前调用
+
+// 演示时点 X 轴会点亮 M0，点 Y 轴点亮 M1（故障时 M1 不亮）
+const _jog = jog;
+jog = function(dir){
+  if (dev.axis === 'X') flashBit('m0'); else if (!dev.fault) flashBit('m1');
+  return _jog(dir);
+};
+
+/* =========================================================
+   12. 后台新增采集点位（环节 2 · 组态后台配置）
+   ========================================================= */
+let extraPts = 0;
+const EXTRA_PTS = [
+  ['载具到位信号', '0x0052', 'M52（机器人到位）', '位（BOOL）', '100 ms', '节点触发'],
+  ['输送链振动值', '4x0124', 'D124（振动模拟量通道 VI1）', '16 位整数', '50 ms', '异常判定']
+];
+function addPoint(){
+  const row = EXTRA_PTS[extraPts];
+  if (!row) { toast('演示用点位已全部添加完毕', 'bad'); return; }
+  const tbody = $('commTable').querySelector('tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${pad(8 + extraPts)}</td><td>${row[0]}</td><td>${row[1]}</td>
+    <td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td>`;
+  tr.style.opacity = '0.6';
+  tbody.appendChild(tr);
+  setTimeout(() => { tr.style.transition = '.4s'; tr.style.opacity = '1'; }, 30);
+  extraPts++;
+  addLog(`后台新增采集点位：${row[0]} · Modbus ${row[1]} · ${row[2]} · ${row[4]}`, 'ok');
+  toast('点位已加入配置表，点「下发配置」后生效', 'ok');
+}
+
+/* =========================================================
+   13. 物流节点配置（环节 3 · 机器人到位信号 → 时间戳）
+   ========================================================= */
+const NODES = [
+  { id:'OUT', t:'出库转运', sig:'M50（立库出库完成上升沿）', f:'货位 / 物料编码 / 出库单号', dur:62 },
+  { id:'WIP', t:'工位配送', sig:'M52（机器人到位上升沿）',   f:'到位坐标 / 夹爪动作 / 载具', dur:48 },
+  { id:'IN',  t:'入库暂存', sig:'M56（暂存完成上升沿）',     f:'暂存库位 / 到位偏差', dur:35 }
+];
+let nodeSt = NODES.map(() => ({ ts:null, dur:null, st:'wait' }));
+
+function hhmmss(){
+  const d = new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function renderNode(){
+  const rows = NODES.map((n, i) => {
+    const s = nodeSt[i];
+    const label = s.st === 'ok' ? '已记录' : s.st === 'run' ? '采集中…' : '待触发';
+    const color = s.st === 'ok' ? 'var(--green)' : s.st === 'run' ? 'var(--amber)' : 'var(--dim2)';
+    return `<tr><td>${i + 1}</td><td>${n.t}</td><td>${n.sig}</td><td style="font-family:var(--sans)">${n.f}</td>
+      <td>${s.ts || '—'}</td><td>${s.dur !== null ? s.dur + ' s' : '—'}</td>
+      <td style="color:${color}">${label}</td></tr>`;
+  }).join('');
+  const total = nodeSt.reduce((a, s) => a + (s.dur || 0), 0);
+  $('nodeTable').innerHTML =
+    `<thead><tr><th>序号</th><th>节点</th><th>触发点位</th><th>采集字段</th><th>时间戳</th><th>节点时长</th><th>状态</th></tr></thead>
+     <tbody>${rows}</tbody>`;
+  $('nodeSum').textContent = total ? `单趟配送时长：${Math.floor(total / 60)} 分 ${pad(total % 60)} 秒` : '单趟配送时长：—';
+}
+
+function nodeLogMsg(msg, cls){
+  const el = document.createElement('div');
+  if (cls) el.className = cls;
+  el.innerHTML = `<span style="color:#5d737c">[${hhmmss()}]</span> ${msg}`;
+  const box = $('nodeLog');
+  if (box.firstChild && box.firstChild.textContent.indexOf('[待触发]') === 0) box.innerHTML = '';
+  box.insertBefore(el, box.firstChild);
+  while (box.children.length > 24) box.removeChild(box.lastChild);
+}
+
+async function runNode(){
+  if (nodeSt.some(s => s.st === 'run')) { toast('节点采集进行中，请稍候', 'bad'); return; }
+  nodeSt = NODES.map(() => ({ ts:null, dur:null, st:'wait' }));
+  renderNode();
+  nodeLogMsg('机器人配送任务下发：出库转运 → 工位配送 → 入库暂存');
+  toast('开始模拟一次机器人配送', 'ok');
+  for (let i = 0; i < NODES.length; i++){
+    nodeSt[i].st = 'run'; renderNode();
+    nodeLogMsg(`等待到位信号：${NODES[i].sig}`);
+    await sleep(1100);
+    nodeSt[i].st = 'ok';
+    nodeSt[i].ts = hhmmss();
+    nodeSt[i].dur = NODES[i].dur;
+    renderNode();
+    nodeLogMsg(`节点「${NODES[i].t}」已记录：时间戳 ${nodeSt[i].ts}，时长 ${NODES[i].dur} s`, 'ok');
+    addLog(`溯源节点已记录：${NODES[i].t} · ${nodeSt[i].ts} · ${NODES[i].dur} s`, 'ok');
+  }
+  const total = nodeSt.reduce((a, s) => a + s.dur, 0);
+  nodeLogMsg(`单趟配送闭环：3 个节点全部记录，合计 ${Math.floor(total / 60)} 分 ${pad(total % 60)} 秒`, 'ok');
+  toast('三个节点已自动打时间戳，配送时长可查', 'ok');
+}
+
+function resetNode(){
+  nodeSt = NODES.map(() => ({ ts:null, dur:null, st:'wait' }));
+  $('nodeLog').innerHTML = '<div>[待触发] 点「模拟一次机器人配送」，三个节点将依次打时间戳</div>';
+  renderNode();
+  toast('节点记录已重置', 'ok');
+}
+
+/* =========================================================
+   13. 运营报表（环节 5 · 优化前后对比）
+   ========================================================= */
+const REP = [
+  ['单订单履约时长', '12 分 10 秒', '6 分 20 秒', '缩短 47.9%', 730, 380],
+  ['单位时间吞吐量', '32 件 / h', '54 件 / h', '提升 68.8%', 32, 54],
+  ['单班洁净区人员', '6 人', '3 人', '减少 50.0%', 6, 3],
+  ['台账数据准确率', '92.4%', '99.6%', '提升 7.2 个百分点', 92.4, 99.6],
+  ['异常平均响应', '45 分钟', '8 分钟', '缩短 82.2%', 45, 8],
+  ['订单履约率', '94.1%', '98.7%', '提升 4.6 个百分点', 94.1, 98.7]
+];
+
+function cellInput(i, c, v, mono){
+  return `<input data-i="${i}" data-c="${c}" value="${v}"
+    style="width:100%;background:transparent;border:1px solid transparent;border-radius:5px;
+    padding:2px 4px;color:var(--txt);font-family:${mono ? 'var(--mono)' : 'var(--sans)'};font-size:12px;outline:none"
+    onfocus="this.style.borderColor='rgba(45,212,191,.55)';this.style.background='rgba(45,212,191,.05)'"
+    onblur="this.style.borderColor='transparent';this.style.background='transparent'">`;
+}
+
+function renderReport(){
+  $('repTable').innerHTML =
+    `<thead><tr><th>指标（可改）</th><th>优化前（可改）</th><th>优化后（可改）</th><th>变化（可改）</th></tr></thead>
+     <tbody>${REP.map((r, i) => `<tr>
+       <td>${cellInput(i, 0, r[0], false)}</td>
+       <td>${cellInput(i, 1, r[1], true)}</td>
+       <td>${cellInput(i, 2, r[2], true)}</td>
+       <td>${cellInput(i, 3, r[3], false)}</td></tr>`).join('')}
+     </tbody>`;
+  $('repBars').innerHTML = REP.map(r => {
+    const max = Math.max(r[4], r[5]);
+    const w1 = (r[4] / max * 100).toFixed(1), w2 = (r[5] / max * 100).toFixed(1);
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px">
+        <span>${r[0]}</span><span style="font-family:var(--mono);color:var(--dim)">${r[1]} → ${r[2]}</span></div>
+      <div style="height:7px;border-radius:4px;background:rgba(44,62,70,.7);overflow:hidden;margin-bottom:4px">
+        <div style="width:${w1}%;height:100%;background:rgba(120,140,150,.75)"></div></div>
+      <div style="height:7px;border-radius:4px;background:rgba(44,62,70,.7);overflow:hidden">
+        <div style="width:${w2}%;height:100%;background:linear-gradient(90deg,rgba(45,212,191,.35),var(--teal))"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function currentRepRows(){
+  const ins = $('repTable').querySelectorAll('input');
+  const rows = [];
+  if (ins && ins.length >= 4){
+    for (let i = 0; i + 3 < ins.length; i += 4){
+      const v = [ins[i].value, ins[i + 1].value, ins[i + 2].value, ins[i + 3].value]
+        .map(x => String(x || '').replace(/,/g, '，'));
+      if (v[0]) rows.push(v);
+    }
+  }
+  if (!rows.length) REP.forEach(r => rows.push([r[0], r[1], r[2], r[3]]));
+  return rows;
+}
+
+function exportReport(){
+  const rows = currentRepRows();
+  const lines = ['指标,优化前,优化后,变化'];
+  rows.forEach(r => lines.push(r.join(',')));
+  const csv = '\uFEFF' + lines.join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '作业优化前后对比表.csv';
+  a.click();
+  addLog(`已导出运营对比表：${rows.length} 项指标（含你修改后的数值）`, 'ok');
+  toast('对比表已按当前表格内容导出', 'ok');
+}
+
+/* =========================================================
+   11. 启动自检（环节 1 · 信息化岗并行作业）
+   ========================================================= */
+const INIT_STEPS = [
+  { t:'登录 WMS 仓储管理系统', d:'操作工账号 · 早班 · 原料库 / 成品库', ok:'账号有效，班次与库区已绑定' },
+  { t:'初始化库存台账', d:'库位 12 个 · 在库物料 48 件 · 批次 3 个', ok:'货位与批次完整，无空码' },
+  { t:'初始化溯源数据库', d:'8 个节点模板 · 历史工序记录 326 条', ok:'节点模板就绪，索引重建完成' },
+  { t:'校验 Modbus 通讯链路', d:'7 个点位逐点读回 · 192.168.6.2:502 站号 1', ok:'7/7 读回一致，无丢包' },
+  { t:'开启实时数据采集通道', d:'采样 100 ms · 心跳 D130 · 曲线开始刷新', ok:'首帧已到达，采集运行中' }
+];
+const INIT_PTS = ['DD100','DD102','M20','D110','D120','D122','D130'];
+let initState = INIT_STEPS.map(() => 'wait');
+let initKpi = { mat:0, node:0, pt:0, ch:0 };
+let beatTimer = null, beatVal = 0, beatHist = [];
+
+function renderInit(){
+  $('initSteps').innerHTML = INIT_STEPS.map((s, i) => {
+    const st = initState[i];
+    const label = st === 'pass' ? '通过' : st === 'run' ? '执行中…' : '待执行';
+    const cls = st === 'pass' ? 'ck pass' : 'ck';
+    const color = st === 'run' ? 'color:var(--amber)' : (st == 'pass' ? '' : 'color:var(--dim2)');
+    return `<div class="${cls}">
+      <div class="i">${pad(i + 1)}</div>=
+      <div class="t">${s.t}<em>${s.d}</em></div>
+      <div class="r" style="${color}">${label}</div>
+    </div>`;
+  }).join('');
+  renderInitKpi();
+}
+
+function renderInitKpi(){
+  $('initKpi').innerHTML = `
+    <div class="kpi"><div class="l">库存台账</div><div class="v">${initKpi.mat}<small> 件</small></div>
+      <div class="s">库位 12 个 · 批次 3 个</div></div>
+    <div class="kpi"><div class="l">溯源节点</div><div class="v">${initKpi.node}<small> /8</small></div>
+      <div class="s">节点模板 + 历史记录 326 条</div></div>
+    <div class="kpi"><div class="l">通讯点位</div><div class="v">${initKpi.pt}<small> /7</small></div>
+      <div class="s">Modbus TCP · 502 · 站号 1</div></div>
+    <div class="kpi"><div class="l">采集通道</div>
+      <div class="v" style="font-size:19px;${initKpi.ch ? 'color:var(--green)' : 'color:var(--dim)'}">${initKpi.ch ? '已开启' : '未开启'}</div>
+      <div class="s">采样 100 ms · 心跳 D130</div></div>`;
+}
+
+function drawBeat(){
+  beatHist.push(7 + Math.abs(Math.sin(beatVal * 0.6)) * 17);
+  if (beatHist.length > 24) beatHist.shift();
+  $('beatBars').innerHTML = beatHist.map(h =>
+    `<div style="flex:1;max-width:9px;height:${h.toFixed(1)}px;border-radius:2px;
+      background:linear-gradient(180deg,var(--teal),rgba(45,212,191,.15))"></div>`).join('');
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function runInit(reset){
+  if (initState.includes('run')) { toast('初始化正在执行，请稍候', 'bad'); return; }
+  if (beatTimer) { clearInterval(beatTimer); beatTimer = null; }
+  initState = INIT_STEPS.map(() => 'wait');
+  initKpi = { mat:0, node:0, pt:0, ch:0 };
+  beatVal = 0; beatHist = [];
+  $('beatBars').innerHTML = '';
+  $('beatNum').textContent = 'D130 = —';
+  $('beatSt').innerHTML = '<i class="dot" style="color:var(--dim2)"></i>心跳 D130 未启动';
+  renderInit();
+  addLog(reset ? '已清除上一轮自检结果，重新开始班前初始化' : '开始执行班前初始化自检');
+  toast(reset ? '已重置，重新自检' : '开始执行班前初始化', 'ok');
+
+  initState[0] = 'run'; renderInit();
+  addLog('自检 01/05：登录 WMS 仓储管理系统（操作工 · 早班）');
+  await sleep(1000);
+  initState[0] = 'pass'; renderInit();
+  addLog('登录成功：班次与库区绑定 —— 原料库 / 成品库', 'ok');
+  toast('账号登录成功，权限生效', 'ok');
+
+  initState[1] = 'run'; renderInit();
+  addLog('自检 02/05：加载库存台账');
+  await sleep(300);
+  for (let i = 1; i <= 48; i++){
+    initKpi.mat = i; renderInitKpi();
+    if (i % 8 === 0) await sleep(70);
+  }
+  initState[1] = 'pass'; renderInit();
+  addLog('台账就绪：12 个库位、48 件在库物料、3 个批次', 'ok');
+
+  initState[2] = 'run'; renderInit();
+  addLog('自检 03/05：加载溯源数据库节点模板');
+  await sleep(900);
+  initKpi.node = 8; initState[2] = 'pass'; renderInit();
+  addLog('溯源库就绪：8 个节点模板，历史工序记录 326 条', 'ok');
+
+  initState[3] = 'run'; renderInit();
+  addLog('自检 04/05：Modbus 点位逐点读回比对');
+  for (let i = 0; i < 7; i++){
+    await sleep(170);
+    initKpi.pt = i + 1; renderInitKpi();
+    addLog(`点位 ${INIT_PTS[i]} 读回一致`);
+  }
+  initState[3] = 'pass'; renderInit();
+  addLog('链路校验完成：7/7 点位一致，站号 1，无丢包', 'ok');
+  toast('通讯链路 7 个点位全部通过', 'ok');
+
+  initState[4] = 'run'; renderInit();
+  addLog('自检 05/05：启动实时数据采集通道');
+  await sleep(700);
+  initKpi.ch = 1; initState[4] = 'pass'; renderInit();
+  $('beatSt').innerHTML = '<i class="dot blink" style="color:var(--green)"></i>采集运行中 · 心跳 D130 递增';
+  beatTimer = setInterval(() => {
+    beatVal++;
+    $('beatNum').textContent = 'D130 = ' + beatVal;
+    drawBeat();
+  }, 300);
+  drawBeat();
+  addLog('采集通道已开启：采样 100 ms，首帧到达', 'ok');
+  toast('四项自检全部通过，数字化管控能力就绪', 'ok');
+}
+
+/* =========================================================
+   14. 启动（所有常量与函数定义完成后再执行）
+   ========================================================= */
+buildRoles();
+buildNav();
+renderStage();
+$('rack').innerHTML = Array.from({length:12}, () => '<div></div>').join('');
+$('latHint').textContent = '响应延迟实时测量';
+renderDiag();
+renderKPI();
+renderTrace();
+renderEvTable();
+renderComm();
+renderInit();
+renderNode();
+renderReport();
+clock();
+setInterval(clock, 1000);
+setInterval(tickComm, 100);
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
